@@ -110,9 +110,9 @@ static class Harness
         }
 
         using var app = new TrayApp();
-        Shot("01-sign-in", () => Capture(new SettingsForm(app)));
+        Shot("01-sign-in", () => Contents(new SettingsForm(app)));
         app.DemoSignIn("you@example.com");
-        Shot("02-settings-signed-in", () => Capture(new SettingsForm(app)));
+        Shot("02-settings-signed-in", () => Contents(new SettingsForm(app)));
         Shot("03-menu", () => CaptureMenu(app.Menu));
         Shot("04-tray-icons", TrayStrip);
 
@@ -121,7 +121,8 @@ static class Harness
         return failed == 0 ? 0 : 1;
     }
 
-    private static Bitmap Capture(Form form)
+    /// <summary>The settings window's full contents, even when the test machine's screen is too short to show it all.</summary>
+    private static Bitmap Contents(SettingsForm form)
     {
         using (form)
         {
@@ -129,8 +130,7 @@ static class Harness
             form.Location = new Point(40, 40);
             form.Show();
             Application.DoEvents();
-            var bmp = new Bitmap(form.Width, form.Height);
-            form.DrawToBitmap(bmp, new Rectangle(Point.Empty, form.Size));
+            var bmp = form.RenderContents();
             form.Close();
             return bmp;
         }

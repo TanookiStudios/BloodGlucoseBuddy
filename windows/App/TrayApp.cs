@@ -291,6 +291,7 @@ sealed class TrayApp : ApplicationContext
         demoPassword = "demo";
         IsSignedIn = true;
         Reading = DemoReading;
+        discordConnected = true;
         UpdateTray();
         Changed?.Invoke();
     }
