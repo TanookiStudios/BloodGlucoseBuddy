@@ -7,3 +7,5 @@ site/dist/
 site/.wrangler/
 node_modules/
 PLAN.md
+windows/**/bin/
+windows/**/obj/

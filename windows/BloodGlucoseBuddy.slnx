@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/App/">
+    <Project Path="App/BloodGlucoseBuddy.csproj" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="Core/BloodGlucoseBuddy.Core.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/BloodGlucoseBuddy.Tests.csproj" />
+  </Folder>
+</Solution>
