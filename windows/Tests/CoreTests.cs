@@ -61,7 +61,7 @@ public class CoreTests
         Assert.Equal(3, a["type"]);
         Assert.Equal("123 mg/dL ↗", a["details"]);
         Assert.Equal("Rising slowly", a["state"]);
-        Assert.Equal("up_45", ((Dictionary<string, string>)a["assets"])["large_image"]);
+        Assert.Equal("v2_up_45", ((Dictionary<string, string>)a["assets"])["large_image"]);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class CoreTests
         var a = Presence.Activity(new Reading(250, Trend.SingleUp, now), now, DisplayMode.Dot, GlucoseUnit.Mgdl, StatusVerb.Playing, 70, 180);
         Assert.Equal(0, a["type"]);
         Assert.Equal("High", a["details"]);
-        Assert.Equal("dot_yellow", ((Dictionary<string, string>)a["assets"])["large_image"]);
+        Assert.Equal("v2_dot_yellow", ((Dictionary<string, string>)a["assets"])["large_image"]);
         Assert.DoesNotContain("250", System.Text.Json.JsonSerializer.Serialize(a));
         Assert.False(a.ContainsKey("state"));
     }

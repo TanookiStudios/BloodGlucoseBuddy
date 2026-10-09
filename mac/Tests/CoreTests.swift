@@ -58,7 +58,7 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(a["type"] as? Int, 3)
         XCTAssertEqual(a["details"] as? String, "123 mg/dL ↗")
         XCTAssertEqual(a["state"] as? String, "Rising slowly")
-        XCTAssertEqual((a["assets"] as? [String: String])?["large_image"], "up_45")
+        XCTAssertEqual((a["assets"] as? [String: String])?["large_image"], "v2_up_45")
     }
 
     func testDotModeNeverShowsTheNumber() {
@@ -67,7 +67,7 @@ final class CoreTests: XCTestCase {
         let a = Presence.activity(reading: r, now: now, mode: .dot, unit: .mgdl, verb: .playing, low: 70, high: 180)
         XCTAssertEqual(a["type"] as? Int, 0)
         XCTAssertEqual(a["details"] as? String, "High")
-        XCTAssertEqual((a["assets"] as? [String: String])?["large_image"], "dot_yellow")
+        XCTAssertEqual((a["assets"] as? [String: String])?["large_image"], "v2_dot_yellow")
         XCTAssertFalse(String(describing: a).contains("250"))
         XCTAssertNil(a["state"])
     }

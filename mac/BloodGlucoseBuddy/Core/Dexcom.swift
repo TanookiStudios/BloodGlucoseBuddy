@@ -73,13 +73,13 @@ enum Trend: String {
     /// Discord art asset key, uploaded to the "Blood Glucose" application.
     var asset: String? {
         switch self {
-        case .doubleUp: return "double_up"
-        case .singleUp: return "up"
-        case .fortyFiveUp: return "up_45"
-        case .flat: return "flat"
-        case .fortyFiveDown: return "down_45"
-        case .singleDown: return "down"
-        case .doubleDown: return "double_down"
+        case .doubleUp: return "v2_double_up"
+        case .singleUp: return "v2_up"
+        case .fortyFiveUp: return "v2_up_45"
+        case .flat: return "v2_flat"
+        case .fortyFiveDown: return "v2_down_45"
+        case .singleDown: return "v2_down"
+        case .doubleDown: return "v2_double_down"
         default: return nil
         }
     }

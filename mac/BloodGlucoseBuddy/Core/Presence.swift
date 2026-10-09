@@ -30,9 +30,9 @@ enum Band: Equatable {
     }
     var asset: String {
         switch self {
-        case .low: return "dot_red"
-        case .inRange: return "dot_green"
-        case .high: return "dot_yellow"
+        case .low: return "v2_dot_red"
+        case .inRange: return "v2_dot_green"
+        case .high: return "v2_dot_yellow"
         }
     }
 }
@@ -66,7 +66,7 @@ enum Presence {
         var activity: [String: Any] = ["type": verb.activityType]
         guard let r = reading, isFresh(r, now: now) else {
             activity["details"] = "No reading"
-            activity["assets"] = ["large_image": "dot_gray", "large_text": "No recent reading"]
+            activity["assets"] = ["large_image": "v2_dot_gray", "large_text": "No recent reading"]
             return activity
         }
         let b = band(r.mgdl, low: low, high: high)

@@ -14,7 +14,7 @@ public static class Labels
     public static string Label(this StatusVerb v) => v == StatusVerb.Watching ? "Watching" : "Playing";
     public static int ActivityType(this StatusVerb v) => v == StatusVerb.Watching ? 3 : 0;
     public static string Word(this Band b) => b switch { Band.Low => "Low", Band.High => "High", _ => "In range" };
-    public static string Asset(this Band b) => b switch { Band.Low => "dot_red", Band.High => "dot_yellow", _ => "dot_green" };
+    public static string Asset(this Band b) => b switch { Band.Low => "v2_dot_red", Band.High => "v2_dot_yellow", _ => "v2_dot_green" };
 }
 
 public static class Presence
@@ -49,7 +49,7 @@ public static class Presence
         if (reading is null || !IsFresh(reading, now))
         {
             activity["details"] = "No reading";
-            activity["assets"] = new Dictionary<string, string> { ["large_image"] = "dot_gray", ["large_text"] = "No recent reading" };
+            activity["assets"] = new Dictionary<string, string> { ["large_image"] = "v2_dot_gray", ["large_text"] = "No recent reading" };
             return activity;
         }
         var band = BandOf(reading.Mgdl, low, high);

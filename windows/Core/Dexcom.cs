@@ -57,8 +57,8 @@ public static class Trends
     /// <summary>Discord art asset key, uploaded to the "Blood Glucose" application.</summary>
     public static string? Asset(this Trend t) => t switch
     {
-        Trend.DoubleUp => "double_up", Trend.SingleUp => "up", Trend.FortyFiveUp => "up_45", Trend.Flat => "flat",
-        Trend.FortyFiveDown => "down_45", Trend.SingleDown => "down", Trend.DoubleDown => "double_down", _ => null,
+        Trend.DoubleUp => "v2_double_up", Trend.SingleUp => "v2_up", Trend.FortyFiveUp => "v2_up_45", Trend.Flat => "v2_flat",
+        Trend.FortyFiveDown => "v2_down_45", Trend.SingleDown => "v2_down", Trend.DoubleDown => "v2_double_down", _ => null,
     };
 }
 
