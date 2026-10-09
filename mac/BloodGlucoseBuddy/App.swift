@@ -9,7 +9,7 @@ struct BloodGlucoseBuddyApp: App {
             MenuContent().environmentObject(state)
         } label: {
             if let title = state.menuBarTitle {
-                Text(title)
+                Text(title).accessibilityIdentifier("menuBarTitle")
             } else {
                 Image(systemName: "drop")
             }
@@ -57,6 +57,7 @@ struct MenuContent: View {
             openWindow(id: "settings")
         }
         .keyboardShortcut(",")
+        .accessibilityIdentifier("openSettings")
         Button("Quit Blood Glucose Buddy") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
@@ -77,13 +78,16 @@ struct SettingsView: View {
             Section("Dexcom account") {
                 if state.isSignedIn {
                     LabeledContent("Signed in as", value: state.username)
+                        .accessibilityIdentifier("signedInAs")
                     LabeledContent("Region", value: state.region.label)
                     Button("Sign Out") { state.signOut() }
                 } else {
                     TextField("Username, email, or phone", text: $username)
                         .textContentType(.username)
+                        .accessibilityIdentifier("username")
                     SecureField("Password", text: $password)
                         .textContentType(.password)
+                        .accessibilityIdentifier("password")
                     Picker("Region", selection: $region) {
                         ForEach(DexcomRegion.allCases) { Text($0.label).tag($0) }
                     }
@@ -99,6 +103,7 @@ struct SettingsView: View {
                     if region.accountSiteURL != nil {
                         LabeledContent {
                             Button("Find My Account ID…") { showFinder = true }
+                                .accessibilityIdentifier("findAccountID")
                         } label: {
                             Text("Email or phone not working?")
                             Text("Lots of Dexcom accounts need their account ID instead. Sign in to Dexcom here and we'll fill it in.")
@@ -115,6 +120,7 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(busy || username.isEmpty || password.isEmpty)
+                    .accessibilityIdentifier("signIn")
                     .keyboardShortcut(.defaultAction)
                 }
             }

@@ -7,7 +7,7 @@ final class AppState: ObservableObject {
     /// The "Blood Glucose" application on Discord's developer site. Not a secret.
     static let discordClientID = "1558184055437004933"
 
-    private let defaults = UserDefaults.standard
+    private let defaults = Demo.isOn ? Demo.defaults : .standard
     private let dexcom = DexcomClient()
     private let discord = DiscordIPC(clientID: AppState.discordClientID)
     private let discordQueue = DispatchQueue(label: "com.tanookistudios.bloodglucosebuddy.discord")
@@ -77,9 +77,10 @@ final class AppState: ObservableObject {
         return discordProblem ?? "Discord: connecting…"
     }
 
-    var openAtLogin: Bool { SMAppService.mainApp.status == .enabled }
+    var openAtLogin: Bool { Demo.isOn ? Demo.openAtLogin : SMAppService.mainApp.status == .enabled }
 
     func setOpenAtLogin(_ on: Bool) {
+        if Demo.isOn { Demo.openAtLogin = on; objectWillChange.send(); return }
         do {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
         } catch {
@@ -95,7 +96,7 @@ final class AppState: ObservableObject {
         let user = username.trimmingCharacters(in: .whitespacesAndNewlines)
         await dexcom.reset()
         do {
-            let r = try await dexcom.latestReading(username: user, password: password, region: region)
+            let r = try await latestReading(username: user, password: password, region: region)
             guard Keychain.save(password, for: user) else { return "Couldn't save the password to your Keychain." }
             if !self.username.isEmpty && self.username != user { Keychain.delete(self.username) }
             self.username = user
@@ -156,7 +157,7 @@ final class AppState: ObservableObject {
             return
         }
         do {
-            if let r = try await dexcom.latestReading(username: username, password: password, region: region) {
+            if let r = try await latestReading(username: username, password: password, region: region) {
                 reading = r
                 dexcomProblem = nil
             } else {
@@ -170,12 +171,18 @@ final class AppState: ObservableObject {
         }
     }
 
+    private func latestReading(username: String, password: String, region: DexcomRegion) async throws -> Reading? {
+        if Demo.isOn { return Demo.reading() }
+        return try await dexcom.latestReading(username: username, password: password, region: region)
+    }
+
     private func refreshDiscord() {
         Task { await pushToDiscord() }
     }
 
     /// Sends the current status every tick, so a restarted Discord picks it up again within 30 seconds.
     private func pushToDiscord() async {
+        if Demo.isOn { discordConnected = true; return }  // never touch the real Discord status
         let activity: [String: Any]? = isSignedIn
             ? Presence.activity(reading: reading, now: Date(), mode: mode, unit: unit, verb: verb,
                                 low: lowThreshold, high: highThreshold)

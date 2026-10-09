@@ -43,3 +43,18 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "-"
+  BloodGlucoseBuddyUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [UITests]
+    dependencies:
+      - target: BloodGlucoseBuddy
+    settings:
+      base:
+        TEST_TARGET_NAME: BloodGlucoseBuddy
+        PRODUCT_BUNDLE_IDENTIFIER: com.tanookistudios.bloodglucosebuddy.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        # A Development-signed runner stalls in AppleSystemPolicy; an unsigned one is rejected as damaged.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+        DEVELOPMENT_TEAM: NPT8NXJ7C8

@@ -6,7 +6,8 @@ namespace BloodGlucoseBuddy;
 static class Startup
 {
     private const string Key = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string Name = "Blood Glucose Buddy";
+    /// <summary>Changeable only so the self-test can use its own entry.</summary>
+    public static string Name { get; set; } = "Blood Glucose Buddy";
     private static string Command => $"\"{Environment.ProcessPath}\"";
 
     public static bool Enabled

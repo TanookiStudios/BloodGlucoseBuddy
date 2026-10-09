@@ -1,0 +1,38 @@
+name: Windows
+
+on:
+  push:
+    paths: ["windows/**", ".github/workflows/windows.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Unit tests
+        run: dotnet test windows/Tests
+      - name: Build the app
+        run: dotnet publish windows/App -c Release -o out
+      - name: Self-test on real Windows
+        shell: pwsh
+        run: |
+          $p = Start-Process out/BloodGlucoseBuddy.exe -ArgumentList '--self-test', "$PWD/selftest" -Wait -PassThru
+          Get-Content selftest/self-test.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: Screenshots
+        shell: pwsh
+        run: |
+          $p = Start-Process out/BloodGlucoseBuddy.exe -ArgumentList '--screenshots', "$PWD/screenshots" -Wait -PassThru
+          Get-Content screenshots/screenshots.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            out/BloodGlucoseBuddy.exe
+            screenshots/
+            selftest/

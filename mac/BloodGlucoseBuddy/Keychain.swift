@@ -12,6 +12,7 @@ enum Keychain {
 
     @discardableResult
     static func save(_ password: String, for account: String) -> Bool {
+        if Demo.isOn { Demo.password = password; return true }
         delete(account)
         var item = query(account)
         item[kSecValueData as String] = Data(password.utf8)
@@ -19,6 +20,7 @@ enum Keychain {
     }
 
     static func password(for account: String) -> String? {
+        if Demo.isOn { return Demo.password }
         var q = query(account)
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -29,6 +31,7 @@ enum Keychain {
     }
 
     static func delete(_ account: String) {
+        if Demo.isOn { Demo.password = nil; return }
         SecItemDelete(query(account) as CFDictionary)
     }
 }

@@ -13,6 +13,12 @@ sealed class TrayApp : ApplicationContext
     private static readonly string SettingsPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Blood Glucose Buddy", "settings.json");
 
+    /// <summary>Screenshot mode (see Harness): made-up readings, settings and password kept in memory,
+    /// and no Dexcom, Discord, Credential Manager or registry. Nothing reaches real data.</summary>
+    public static bool Demo { get; set; }
+    public static Reading? DemoReading { get; set; }
+    private static string? demoPassword;
+
     public AppSettings Settings { get; }
     public Reading? Reading { get; private set; }
     public string? DexcomProblem { get; private set; }
@@ -39,11 +45,12 @@ sealed class TrayApp : ApplicationContext
 
     public TrayApp()
     {
-        Settings = AppSettings.Load(SettingsPath);
-        IsSignedIn = Settings.Username.Length > 0 && CredentialStore.Password() is not null;
+        Settings = Demo ? new AppSettings() : AppSettings.Load(SettingsPath);
+        IsSignedIn = Settings.Username.Length > 0 && Password() is not null;
         using (var s = typeof(TrayApp).Assembly.GetManifestResourceStream("app.ico")!) AppIcon = new Icon(s);
         tray = new NotifyIcon { Icon = AppIcon, Text = "Blood Glucose Buddy", Visible = true, ContextMenuStrip = BuildMenu() };
         tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowSettings(); };
+        if (Demo) { tray.Visible = false; return; }
         try { Startup.RefreshPath(); } catch (Exception e) when (e is UnauthorizedAccessException or System.Security.SecurityException) { }
         timer.Tick += async (_, _) => await TickAsync();
         timer.Start();
@@ -65,6 +72,7 @@ sealed class TrayApp : ApplicationContext
         verbMenu = Choices("Status word", Enum.GetValues<StatusVerb>(), v => $"{v.Label()} Blood Glucose", v => Settings.Verb = v, () => Settings.Verb);
         startupItem = new ToolStripMenuItem("Start with Windows", null, (_, _) =>
         {
+            if (Demo) return;
             try { Startup.Enabled = !Startup.Enabled; }
             catch (Exception e) { DexcomProblem = $"Couldn't change Start with Windows: {e.Message}"; }
         });
@@ -96,7 +104,7 @@ sealed class TrayApp : ApplicationContext
         dexcomItem.Text = DexcomProblem ?? "";
         dexcomItem.Visible = DexcomProblem is not null;
         discordItem.Text = DiscordLine;
-        startupItem.Checked = Startup.Enabled;
+        startupItem.Checked = Demo || Startup.Enabled;
         settingsItem.Text = IsSignedIn ? "Settings…" : "Sign In…";
     }
 
@@ -134,7 +142,7 @@ sealed class TrayApp : ApplicationContext
 
     public void SettingsChanged()
     {
-        try { Settings.Save(SettingsPath); }
+        try { if (!Demo) Settings.Save(SettingsPath); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { DexcomProblem = $"Couldn't save settings: {e.Message}"; }
         UpdateTray();
         Changed?.Invoke();
@@ -150,8 +158,8 @@ sealed class TrayApp : ApplicationContext
         dexcom.Reset();
         try
         {
-            var r = await dexcom.LatestReadingAsync(username, password, region);
-            if (!CredentialStore.Save(username, password)) return "Couldn't save the password to Windows Credential Manager.";
+            var r = Demo ? DemoReading : await dexcom.LatestReadingAsync(username, password, region);
+            if (!SavePassword(username, password)) return "Couldn't save the password to Windows Credential Manager.";
             Settings.Username = username;
             Settings.Region = region;
             IsSignedIn = true;
@@ -159,7 +167,7 @@ sealed class TrayApp : ApplicationContext
             lastFetch = DateTimeOffset.UtcNow;
             Reading = r;
             DexcomProblem = r is null ? "Signed in, but Dexcom has no readings from the last 24 hours. Is Share turned on?" : null;
-            if (!Settings.StartupSetUp)
+            if (!Settings.StartupSetUp && !Demo)
             {
                 Settings.StartupSetUp = true;
                 try { Startup.Enabled = true; } catch (Exception e) when (e is UnauthorizedAccessException or System.Security.SecurityException) { }
@@ -181,7 +189,7 @@ sealed class TrayApp : ApplicationContext
 
     public void SignOut()
     {
-        CredentialStore.Delete();
+        if (Demo) demoPassword = null; else CredentialStore.Delete();
         Settings.Username = "";
         IsSignedIn = false;
         Reading = null;
@@ -218,7 +226,7 @@ sealed class TrayApp : ApplicationContext
     private async Task FetchAsync()
     {
         lastFetch = DateTimeOffset.UtcNow;
-        if (CredentialStore.Password() is not { } password)
+        if (Password() is not { } password)
         {
             IsSignedIn = false;
             return;
@@ -246,6 +254,7 @@ sealed class TrayApp : ApplicationContext
     /// <summary>Sends the current status every tick, so a restarted Discord picks it up again within 30 seconds.</summary>
     private async Task PushToDiscordAsync()
     {
+        if (Demo) { discordConnected = true; return; }  // never touch the real Discord status
         var activity = IsSignedIn
             ? Presence.Activity(Reading, DateTimeOffset.UtcNow, Settings.Mode, Settings.Unit, Settings.Verb, Settings.Low, Settings.High)
             : null;
@@ -265,6 +274,28 @@ sealed class TrayApp : ApplicationContext
     }
 
     // MARK: Tray icon
+
+    private static string? Password() => Demo ? demoPassword : CredentialStore.Password();
+
+    private static bool SavePassword(string username, string password)
+    {
+        if (!Demo) return CredentialStore.Save(username, password);
+        demoPassword = password;
+        return true;
+    }
+
+    /// <summary>For the screenshot harness: start signed in with a made-up account.</summary>
+    public void DemoSignIn(string username)
+    {
+        Settings.Username = username;
+        demoPassword = "demo";
+        IsSignedIn = true;
+        Reading = DemoReading;
+        UpdateTray();
+        Changed?.Invoke();
+    }
+
+    public ContextMenuStrip Menu { get { RefreshMenu(); return tray.ContextMenuStrip!; } }
 
     private void UpdateTray()
     {
@@ -291,9 +322,9 @@ sealed class TrayApp : ApplicationContext
     }
 
     /// <summary>The number on a colored square, drawn at the tray's real pixel size so it stays sharp.</summary>
-    private static Icon NumberIcon(string text, Band band)
+    internal static Icon NumberIcon(string text, Band band, int? pixels = null)
     {
-        var size = Math.Max(16, SystemInformation.SmallIconSize.Width);
+        var size = pixels ?? Math.Max(16, SystemInformation.SmallIconSize.Width);
         var (bg, fg) = band switch
         {
             Band.Low => (Color.FromArgb(0xED, 0x42, 0x45), Color.White),

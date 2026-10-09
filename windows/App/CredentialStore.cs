@@ -6,7 +6,8 @@ namespace BloodGlucoseBuddy;
 /// <summary>The Dexcom password, kept in Windows Credential Manager (never in a file).</summary>
 static class CredentialStore
 {
-    private const string Target = "BloodGlucoseBuddy/Dexcom";
+    /// <summary>Changeable only so the self-test can use its own entry and never touch a real password.</summary>
+    public static string Target { get; set; } = "BloodGlucoseBuddy/Dexcom";
     private const uint CredTypeGeneric = 1, CredPersistLocalMachine = 2;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
