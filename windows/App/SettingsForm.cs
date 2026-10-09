@@ -61,6 +61,10 @@ sealed class SettingsForm : Form
             Muted(Wrap("Not a medical device. Never make treatment decisions from Blood Glucose Buddy; use your Dexcom app or receiver. It reads Dexcom's unofficial Share feed, which can stop working without notice. Not affiliated with Dexcom or Discord.")));
         root.Padding = new Padding(12);
         this.root = root;
+        // Every box the same width as the widest one.
+        var boxes = root.Controls.OfType<GroupBox>().ToList();
+        var widest = boxes.Max(b => b.GetPreferredSize(Size.Empty).Width);
+        foreach (var b in boxes) b.MinimumSize = new Size(widest, 0);
         // Scrolls on short screens instead of cutting the bottom (and the disclaimer) off.
         Controls.Add(new Panel { Dock = DockStyle.Fill, AutoScroll = true, Controls = { root } });
 
