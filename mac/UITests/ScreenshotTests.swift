@@ -118,6 +118,16 @@ final class ScreenshotTests: XCTestCase {
         app.typeKey(.escape, modifierFlags: [])
     }
 
+    func test4AboutMaddie() {
+        let app = launch(signedIn: true)
+        defer { app.terminate() }
+        app.statusItems.firstMatch.click()
+        let about = openMenu(app, showing: "Quit Blood Glucose Buddy").menuItems["openAbout"]
+        XCTAssertTrue(about.waitForExistence(timeout: 5), "About Maddie missing from the menu")
+        about.click()
+        capture(app.windows["About Maddie"], "12-about-maddie")
+    }
+
     func test3MenuBarVariety() {
         for (mgdl, trend, unit, name) in [(64, "SingleDown", "mgdl", "09-menu-bar-low"),
                                           (245, "DoubleUp", "mgdl", "10-menu-bar-high"),

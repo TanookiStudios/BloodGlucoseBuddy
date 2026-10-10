@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/docs/screenshots/mac"
 EXPECTED=(01-sign-in 02-sign-in-filled 03-settings-signed-in 04-menu-bar 05-menu 06-menu-units
-          07-menu-discord 08-settings-discord 09-menu-bar-low 10-menu-bar-high 11-menu-bar-mmol)
+          07-menu-discord 08-settings-discord 09-menu-bar-low 10-menu-bar-high 11-menu-bar-mmol 12-about-maddie)
 cd "$ROOT/mac"
 xcodegen generate --quiet
 RESULT="build/Screenshots.xcresult"

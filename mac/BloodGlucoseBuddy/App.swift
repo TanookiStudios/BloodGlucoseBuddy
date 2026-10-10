@@ -20,6 +20,12 @@ struct BloodGlucoseBuddyApp: App {
         }
         .windowResizability(.contentSize)
         .defaultLaunchBehavior(state.isSignedIn ? .suppressed : .presented)
+
+        Window("About Maddie", id: "about") {
+            AboutView()
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
     }
 }
 
@@ -58,6 +64,11 @@ struct MenuContent: View {
 
         Divider()
 
+        Button("About Maddie…") {
+            NSApp.activate()
+            openWindow(id: "about")
+        }
+        .accessibilityIdentifier("openAbout")
         Button(state.isSignedIn ? "Settings…" : "Sign In…") {
             NSApp.activate()
             openWindow(id: "settings")
