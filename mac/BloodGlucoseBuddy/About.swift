@@ -13,9 +13,9 @@ struct AboutView: View {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
                 Text("Hi, I'm Maddie.").font(.title2.bold())
             }
-            Text("I wear a Dexcom, and I'm at my computer most of the day. Blood Glucose Buddy started as a silly idea: what if my blood sugar just showed up under my name on Discord? It turned out it could. Then I noticed the part I actually looked at all day was the number sitting next to my clock, so that's what this is now.")
-            Text("I'm autistic, and office jobs and I have never got on. So with my wife's support, I make small apps full-time, usually ones that fix something that bugged me. That's how I pay my bills.")
-            Text("I wanted this one to be free for everyone who wears a Dexcom, so it is, and it'll stay that way. If it's earned its spot in your menu bar and you'd like to say thanks, a tip helps me keep making things like this. No pressure at all.")
+            Text("My wife has followed my Dexcom since last year. When I went looking for a way to see my own number on my computer, I found out Dexcom's official feed for apps runs an hour behind. An hour late is no use to anyone, so I built this on the same live feed my wife's phone uses.")
+            Text("I spend ten to twelve hours a day at my desk making apps, and this turned out to be the most useful thing on my screen. It's also my first app on the App Store.")
+            Text("It's free, and it'll stay free. But apps are my whole income, and some things wait on money. The Windows version is still unsigned because I can't afford the certificate yet, so Windows warns people away from it. If this has earned its spot next to your clock, a tip goes straight into things like that. No pressure at all.")
             tipButtons
             Image("Signature").resizable().scaledToFit().frame(height: 40).foregroundStyle(.primary)
                 .accessibilityLabel("Signed, Maddie")
