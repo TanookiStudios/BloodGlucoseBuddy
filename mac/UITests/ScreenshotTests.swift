@@ -52,6 +52,12 @@ final class ScreenshotTests: XCTestCase {
         window.buttons["signIn"].click()
         XCTAssertTrue(window.descendants(matching: .any)["signedInAs"].waitForExistence(timeout: 15), "sign-in never finished")
         capture(window, "03-settings-signed-in")
+
+        let discord = window.descendants(matching: .any)["discordOn"]
+        XCTAssertTrue(discord.waitForExistence(timeout: 5), "Discord switch missing from settings")
+        discord.click()
+        XCTAssertTrue(window.staticTexts["Discord: showing your status"].waitForExistence(timeout: 5), "Discord options never appeared")
+        capture(window, "08-settings-discord")
     }
 
     func test2MenuBarAndMenu() {
@@ -62,7 +68,7 @@ final class ScreenshotTests: XCTestCase {
         item.click()
         let menu = app.menus.firstMatch
         capture(menu, "05-menu")
-        for (title, name) in [("Show on Discord", "06-menu-show-on-discord"), ("Units", "07-menu-units"), ("Status Word", "08-menu-status-word")] {
+        for (title, name) in [("Units", "06-menu-units"), ("Discord", "07-menu-discord")] {
             let entry = menu.menuItems[title]
             XCTAssertTrue(entry.waitForExistence(timeout: 5), "\(title) missing from the menu")
             entry.hover()

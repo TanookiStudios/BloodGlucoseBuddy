@@ -1,20 +1,18 @@
 # Blood Glucose Buddy
 
-Rich Presence for Discord: your live Dexcom reading and trend arrow on your Discord profile. For Mac and Windows.
+Your live Dexcom reading and trend arrow in your Mac menu bar or Windows tray, always one glance away. Optionally on your Discord profile too.
 
 Website: **[bloodglucosebuddy.tanookistudios.com](https://bloodglucosebuddy.tanookistudios.com)** · Setup guide with screenshots: **[docs/SETUP.md](docs/SETUP.md)**
 
-| Number mode | Colored dot mode |
+| Mac menu bar | Windows tray |
 |---|---|
-| ![Drawing of a Discord profile: Watching Blood Glucose, 112 mg/dL rising slowly](docs/screenshots/discord/number.png) | ![Drawing of a Discord profile: Watching Blood Glucose, a green dot and In range](docs/screenshots/discord/dot.png) |
+| ![The Mac menu, open from the menu bar: 112 mg/dL rising slowly](docs/screenshots/mac/05-menu.png) | ![Windows tray icons: 112 on green, 64 on red, 245 on yellow, 6.2 on green](docs/screenshots/windows/04-tray-icons.png) |
 
-<sub>Drawings of what Discord shows, made from the same pictures the app sends.</sub>
-
-- Lives in the Mac menu bar or the Windows tray, shows your number there too, and starts when you log in.
-- Number mode, or colored-dot-only mode (In range / High / Low) for people who'd rather not share the number.
-- mg/dL or mmol/L. "Watching" or "Playing". Your own high and low lines.
+- Your number and arrow next to the clock, refreshed every five minutes from Dexcom Share, the same live feed the Follow app uses. Starts when you log in.
 - A reading older than 15 minutes shows as **No reading**, never as a stale number.
+- mg/dL or mmol/L. On Windows the tray number turns green, yellow or red against your own high and low lines.
 - Dexcom password in the macOS Keychain or Windows Credential Manager. No account, no server, no analytics.
+- **Optional: Discord.** Turn on *Show on Discord* and your reading appears under your name, as the number or just a colored dot (In range / High / Low). Off until you turn it on.
 
 **Free and open source, MIT licensed.**
 
@@ -27,7 +25,7 @@ Website: **[bloodglucosebuddy.tanookistudios.com](https://bloodglucosebuddy.tano
 | **Mac** (macOS 15+) | [Latest release](https://github.com/TanookiStudios/BloodGlucoseBuddy/releases/latest) — signed and notarized by Apple. |
 | **Windows** (Windows 11) | **In testing.** A [test build](https://github.com/TanookiStudios/BloodGlucoseBuddy/releases/tag/v1.1.0-beta.2) is up; the full release follows once it's been tried on real PCs. Not yet code-signed, so Windows asks you to click **More info → Run anyway** the first time. |
 
-Then follow the **[setup guide](docs/SETUP.md)**: turn on Dexcom Share, sign in, and switch on one Discord setting.
+Then follow the **[setup guide](docs/SETUP.md)**: turn on Dexcom Share and sign in. Discord is one more optional step.
 
 ## Screenshots
 
@@ -39,20 +37,24 @@ Then follow the **[setup guide](docs/SETUP.md)**: turn on Dexcom Share, sign in,
 |---|---|
 | ![The Mac menu](docs/screenshots/mac/05-menu.png) | ![Mac settings after signing in](docs/screenshots/mac/03-settings-signed-in.png) |
 
-**Windows** — the tray icon in each state, its menu, and settings:
-
-![Windows tray icons: 112 on green, 64 on red, 245 on yellow, 6.2 on green](docs/screenshots/windows/04-tray-icons.png)
+**Windows** — the tray menu and settings:
 
 | | |
 |---|---|
 | ![The Windows tray menu](docs/screenshots/windows/03-menu.png) | ![Windows settings after signing in](docs/screenshots/windows/02-settings-signed-in.png) |
+
+**On Discord (optional)** — drawings of what Discord shows, made from the same pictures the app sends:
+
+| Number mode | Colored dot mode |
+|---|---|
+| ![Drawing of a Discord profile: Watching Blood Glucose, 112 mg/dL rising slowly](docs/screenshots/discord/number.png) | ![Drawing of a Discord profile: Watching Blood Glucose, a green dot and In range](docs/screenshots/discord/dot.png) |
 
 Every screen is in the [setup guide](docs/SETUP.md). All screenshots come from automated runs with made-up readings (see below), never a real account.
 
 ## How it works
 
 - **Dexcom:** Dexcom's official developer API delays data by an hour (three outside the US), so this reads **Dexcom Share** instead — the live feed the Follow app uses — with the user's own login. Share has to be on with at least one follower. Some accounts won't authenticate by email or phone; *Find My Account ID* opens Dexcom's own sign-in page and reads the account ID from the profile page address.
-- **Discord:** Rich Presence over the desktop app's local IPC (`$TMPDIR/discord-ipc-N` on Mac, the `\\.\pipe\discord-ipc-N` named pipe on Windows). One shared Discord application ("Blood Glucose", ID `1558184055437004933`) holds the arrow and dot pictures in `assets/discord/`. Setting a *custom status* from code would be a self-bot, which Discord bans, so this doesn't.
+- **Discord (optional, off by default):** Rich Presence over the desktop app's local IPC (`$TMPDIR/discord-ipc-N` on Mac, the `\\.\pipe\discord-ipc-N` named pipe on Windows). One shared Discord application ("Blood Glucose", ID `1558184055437004933`) holds the arrow and dot pictures in `assets/discord/`. Setting a *custom status* from code would be a self-bot, which Discord bans, so this doesn't.
 - **What's shown:** `mac/BloodGlucoseBuddy/Core/Presence.swift` and `windows/Core/Presence.cs` — the same rules, tested on both sides.
 
 ## Building
@@ -90,7 +92,7 @@ dotnet publish windows/App -c Release -o dist/win
 
 ## Releasing
 
-1. Bump `MARKETING_VERSION` in `mac/project.yml` and `<Version>` in `windows/App/BloodGlucoseBuddy.csproj`, and add notes to the top of `site/versions.json`.
+1. Bump `MARKETING_VERSION` in `mac/project.yml` and `<Version>` in `windows/App/BloodGlucoseBuddy.csproj`, and add notes to the top of `site/versions.json`. After new Mac screenshots, copy `docs/screenshots/mac/05-menu.png` to `site/shots/mac-menu.png` (the site's front page).
 2. `scripts/release-mac.sh` — tests, builds, signs, notarizes and zips into `dist/`.
 3. Windows: `dotnet publish windows/App -c Release -o dist/win`.
 4. `gh release create v<version> dist/BloodGlucoseBuddy-<version>-mac.zip dist/BloodGlucoseBuddy-<version>-windows.exe`

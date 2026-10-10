@@ -25,6 +25,7 @@ if (appVersion !== LATEST.version) throw new Error(`site/versions.json starts at
 const zipOf = (v) => `${REPO}/releases/download/v${v}/BloodGlucoseBuddy-${v}-mac.zip`;
 const fmtDate = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+if (!fs.existsSync(path.join(here, "shots", "mac-menu.png"))) throw new Error("site/shots/mac-menu.png is missing - run scripts/capture-screenshots-mac.sh, then copy docs/screenshots/mac/05-menu.png there");
 const CSS = fs.readFileSync(path.join(here, "style.css"), "utf8");
 
 const NAV = [["index.html", "Home"], ["how-it-works.html", "How It Works"], ["download.html", "Download"], ["privacy.html", "Privacy"], ["about-maddie.html", "About Maddie"]];
@@ -84,34 +85,35 @@ const pages = {};
 
 pages["index.html"] = page({
   file: "index.html",
-  title: `${NAME} - Your Dexcom Reading on Your Discord Profile`,
-  desc: "Free Mac app that shows your live Dexcom blood glucose and trend arrow on your Discord profile, or just a green, yellow or red dot if you'd rather keep the number private. Open source.",
+  title: `${NAME} - Your Live Dexcom Reading in Your Menu Bar`,
+  desc: "Free Mac app that keeps your live Dexcom blood glucose and trend arrow in your menu bar, so it's always one glance away. Can show it on your Discord profile too, if you like. Open source.",
   body: `
 <section class="hero">
   <div>
     <p class="eyebrow">Free Mac App · v${LATEST.version}</p>
-    <h1>Your blood sugar, on your Discord profile.</h1>
-    <p class="lede">${NAME} reads your Dexcom every five minutes and shows it under your name in Discord, trend arrow and all. It sits quietly in your Mac's menu bar and you never have to think about it again.</p>
+    <h1>Your blood sugar, always in view.</h1>
+    <p class="lede">${NAME} puts your live Dexcom reading and trend arrow in your Mac's menu bar, refreshed every five minutes. It's one glance away while you work, game or watch, without picking up your phone.</p>
     <div class="btns"><a class="btn pink" href="/download">Download for Mac</a><a class="btn" href="/how-it-works">How It Works</a></div>
-    <p class="small">macOS 15 or later, plus the Discord desktop app. Windows version on the way.</p>
+    <p class="small">macOS 15 or later. Windows version on the way.</p>
   </div>
-  ${card({ img: "up_45", details: "112 mg/dL ↗", state: "Rising slowly", elapsed: "02:14 elapsed", label: "Number mode: your reading, trend arrow and how old the reading is." })}
+  <figure><img class="shot" src="/shots/mac-menu.png" alt="The ${NAME} menu, open from the menu bar: 112 mg/dL rising slowly, read 2 minutes ago, with Units, Open at Login and Discord options"><figcaption>Click the number for the full reading and the options.</figcaption></figure>
 </section>
-
-<h2>Show As Much As You Like</h2>
-<div class="cards2">
-  ${card({ img: "flat", details: "6.2 mmol/L →", state: "Steady", elapsed: "00:41 elapsed", label: "Number mode, in mmol/L. Switch units from the menu bar." })}
-  ${card({ img: "dot_green", details: "In range", state: "", elapsed: "03:02 elapsed", label: "Colored dot mode: green, yellow or red, and no number at all." })}
-</div>
 
 <h2>Why You'll Like It</h2>
 <div class="grid3">
-  <div class="card"><h3>Live, Not An Hour Late</h3><p>Dexcom's official developer feed runs an hour behind. ${NAME} uses Share, the same live feed the Dexcom Follow app uses, so what your friends see is what your phone sees.</p></div>
-  <div class="card"><h3>Your Number, Your Call</h3><p>Show the number, or switch to a colored dot that only says In range, High or Low. You pick the high and low lines.</p></div>
-  <div class="card"><h3>Never A Stale Number</h3><p>If a reading is more than fifteen minutes old, it says <em>No reading</em> instead. Nobody sees an old number as if it were now.</p></div>
-  <div class="card"><h3>In Your Menu Bar Too</h3><p>Your current number and arrow sit at the top of your screen. Click it for settings. It starts by itself when you log in.</p></div>
+  <div class="card"><h3>Always In View</h3><p>Your number and arrow sit at the top of your screen, next to the clock. Click it for the full reading and how old it is.</p></div>
+  <div class="card"><h3>Live, Not An Hour Late</h3><p>Dexcom's official developer feed runs an hour behind. ${NAME} uses Share, the same live feed the Dexcom Follow app uses, so what you see is what your phone sees.</p></div>
+  <div class="card"><h3>Never A Stale Number</h3><p>If a reading is more than fifteen minutes old, it says <em>No reading</em> instead of showing an old number as if it were now.</p></div>
+  <div class="card"><h3>Set And Forget</h3><p>It starts by itself when you log in and stays out of the way. mg/dL or mmol/L, your choice.</p></div>
   <div class="card"><h3>Password Stays Put</h3><p>Your Dexcom password lives in your Mac's Keychain and only ever goes to Dexcom. No account, no server, no analytics.</p></div>
   <div class="card"><h3>Open Source</h3><p>Every line is <a href="${REPO}">on GitHub</a> under the MIT license, including the part that touches your Dexcom login.</p></div>
+</div>
+
+<h2>Optional: Show It On Discord</h2>
+<p class="prose">Flip one switch and your reading shows under your name on Discord, so friends can see how you're doing without asking. Show the number, or just a colored dot that says In range, High or Low. It's off until you turn it on.</p>
+<div class="cards2">
+  ${card({ img: "up_45", details: "112 mg/dL ↗", state: "Rising slowly", elapsed: "02:14 elapsed", label: "Number mode: your reading, trend arrow and how old the reading is." })}
+  ${card({ img: "dot_green", details: "In range", state: "", elapsed: "03:02 elapsed", label: "Colored dot mode: green, yellow or red, and no number at all." })}
 </div>
 
 <p class="warn">${DISCLAIMER}</p>
@@ -125,12 +127,12 @@ pages["index.html"] = page({
 pages["how-it-works.html"] = page({
   file: "how-it-works.html",
   title: `How ${NAME} Works - Setup in Five Minutes`,
-  desc: `Install ${NAME}, sign in with your Dexcom login, and turn on one Discord setting. Step by step, with answers to common questions.`,
+  desc: `Turn on Dexcom Share, install ${NAME} and sign in. Plus the optional Discord step. Step by step, with answers to common questions.`,
   body: `
 <div class="prose">
 <p class="eyebrow">Setup</p>
 <h1>How It Works</h1>
-<p class="lede">Three things, about five minutes, once.</p>
+<p class="lede">Two things, about five minutes, once. A third if you want it on Discord.</p>
 
 <h2>1. Turn On Dexcom Share</h2>
 <p>${NAME} reads the same live feed your followers see, so Share has to be on. If someone already follows you in the Dexcom Follow app, it's on and you can skip this.</p>
@@ -145,22 +147,23 @@ pages["how-it-works.html"] = page({
   <li><a href="/download">Download the latest version</a> and double-click the zip to unzip it.</li>
   <li>Drag <strong>${NAME}</strong> into your Applications folder and open it.</li>
   <li>A sign-in window opens. Use your own Dexcom login - the one you use in the Dexcom app - not a follower's. Phone numbers need a plus and your country code, like <code>+15551234567</code>.</li>
-  <li>Pick your region and press <strong>Sign In</strong>. The drop in your menu bar turns into your number.</li>
+  <li>Pick your region and press <strong>Sign In</strong>. The drop in your menu bar turns into your number. That's it.</li>
 </ol>
 <p class="note">Email or phone not accepted? Lots of Dexcom accounts only work with their account ID. Press <strong>Find My Account ID</strong> in the sign-in window, sign in to Dexcom on the page that opens, and the app fills it in for you. Then type your password once more.</p>
 
-<h2>3. Let Discord Show It</h2>
-<p>Discord hides activity from apps until you say otherwise.</p>
+<h2>3. Optional: Show It On Discord</h2>
+<p>Skip this if you don't use Discord. You'll need the Discord desktop app open on the same Mac.</p>
 <ol class="how">
-  <li>In the Discord desktop app, click the gear at the bottom left to open User Settings.</li>
+  <li>Click your number in the menu bar, choose <strong>Discord</strong>, then <strong>Show on Discord</strong>.</li>
+  <li>Discord hides activity from apps until you say otherwise, so in the Discord desktop app, click the gear at the bottom left to open User Settings.</li>
   <li>Under Activity Settings, choose <strong>Activity Privacy</strong>.</li>
   <li>Turn on <strong>Share your detected activities with others</strong>.</li>
 </ol>
 <p>Click your own picture in Discord and you'll see <em>Watching Blood Glucose</em> with your reading.</p>
 
 <h2>Common Questions</h2>
-<details class="faq"><summary>Who can see my reading?</summary><p>Anyone who can see your Discord profile - friends and people in every server you're in. To hide it from one server, right-click that server in Discord, choose Privacy Settings, and turn off Activity Status. Or switch to colored dot mode so nobody sees a number at all.</p></details>
-<details class="faq"><summary>Why doesn't it work on my phone?</summary><p>Discord only lets apps set your status from the same computer as the Discord desktop app. There's no way for a phone app to do it without breaking Discord's rules, which can get accounts banned.</p></details>
+<details class="faq"><summary>Who can see my reading?</summary><p>Only you, unless you turn on Show on Discord. Then it's anyone who can see your Discord profile - friends and people in every server you're in. To hide it from one server, right-click that server in Discord, choose Privacy Settings, and turn off Activity Status. Or switch to colored dot mode so nobody sees a number at all.</p></details>
+<details class="faq"><summary>Is there a phone version?</summary><p>No. Your Dexcom app already shows your number on your phone; this is for your computer. Discord also only lets apps set your status from the computer the Discord desktop app runs on.</p></details>
 <details class="faq"><summary>It says No reading.</summary><p>Your latest reading is more than fifteen minutes old - your sensor might be warming up, or your phone lost signal. It picks back up on its own as soon as a new reading arrives.</p></details>
 <details class="faq"><summary>Dexcom says my account is locked.</summary><p>Dexcom locks accounts for a while after several wrong passwords. ${NAME} stops trying the moment a password is turned down, so it won't make that worse. Wait about half an hour, then open Settings from the menu, sign out, and sign back in.</p></details>
 <details class="faq"><summary>Does it work with Libre or other sensors?</summary><p>Not right now - it only reads Dexcom Share.</p></details>
@@ -180,7 +183,7 @@ pages["download.html"] = page({
 <h1>Download ${NAME}</h1>
 <p class="lede">Free, for Mac. Signed and notarized by Apple, so it opens without warnings.</p>
 <div class="btns"><a class="btn pink" href="${zipOf(LATEST.version)}">Download ${LATEST.version} for Mac</a><a class="btn" href="/how-it-works">Setup Steps</a></div>
-<p class="small">Needs macOS 15 or later and the Discord desktop app. Released ${fmtDate(LATEST.date)}. A Windows version is on the way.</p>
+<p class="small">Needs macOS 15 or later. Showing it on Discord also needs the Discord desktop app. Released ${fmtDate(LATEST.date)}. A Windows version is on the way.</p>
 <h2>Every Version</h2>
 ${VERSIONS.map((v, i) => `<div class="version"><div><strong>${v.version}</strong>${i === 0 ? '<span class="badge">Latest</span>' : ""}<div class="small">${fmtDate(v.date)}</div><div class="small"><a href="${zipOf(v.version)}">Download zip</a></div></div><ul>${v.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></div>`).join("\n")}
 <p class="small">Prefer to build it yourself? The <a href="${REPO}">source code</a> is on GitHub.</p>
@@ -191,22 +194,22 @@ ${VERSIONS.map((v, i) => `<div class="version"><div><strong>${v.version}</strong
 pages["privacy.html"] = page({
   file: "privacy.html",
   title: `Privacy - ${NAME}`,
-  desc: `${NAME} has no account, no server and no analytics. Your Dexcom password goes only to Dexcom, and your reading goes only to the Discord app on your own Mac.`,
+  desc: `${NAME} has no account, no server and no analytics. Your Dexcom password goes only to Dexcom, and your reading stays on your Mac unless you choose to show it on Discord.`,
   body: `
 <div class="prose">
 <p class="eyebrow">Privacy</p>
 <h1>Privacy Policy</h1>
-<p class="muted">Last updated ${fmtDate("2026-10-09")}.</p>
+<p class="muted">Last updated ${fmtDate("2026-10-10")}.</p>
 <h2>The Short Version</h2>
 <p>${NAME} has no account, no server of its own, and no analytics. Tanooki Studios never receives your login, your readings or anything else from the app.</p>
 <h2>Your Dexcom Login</h2>
 <p>Your Dexcom username (or account ID) and password are stored in your Mac's Keychain. They are sent only to Dexcom's Share service, over an encrypted connection, to fetch your latest reading. If you use <em>Find My Account ID</em>, Dexcom's own sign-in page opens inside the app; the app only reads the page address to pick up your account ID, and forgets that sign-in when the window closes.</p>
 <h2>Your Reading</h2>
-<p>Your latest reading and trend are handed to the Discord desktop app on the same Mac, which shows them on your profile. From there, who sees it is up to Discord and your Discord privacy settings - see <a href="https://discord.com/privacy">Discord's privacy policy</a>. The app keeps no history; it only remembers the latest reading while it's running.</p>
+<p>Your latest reading and trend are shown in your menu bar and stay on your Mac. If you turn on <em>Show on Discord</em>, they're also handed to the Discord desktop app on the same Mac, which shows them on your profile. From there, who sees it is up to Discord and your Discord privacy settings - see <a href="https://discord.com/privacy">Discord's privacy policy</a>. The app keeps no history; it only remembers the latest reading while it's running.</p>
 <h2>Signing Out</h2>
-<p>Choose Sign Out in Settings and your password is deleted from the Keychain and your Discord status is cleared.</p>
+<p>Choose Sign Out in Settings and your password is deleted from the Keychain and your Discord status, if you had it on, is cleared.</p>
 <h2>Third Parties</h2>
-<p>Dexcom, to read your glucose, and Discord, to show it. Nothing is sold, shared or used for advertising, because nothing is collected in the first place.</p>
+<p>Dexcom, to read your glucose. Discord, only if you turn on Show on Discord. Nothing is sold, shared or used for advertising, because nothing is collected in the first place.</p>
 <h2>Medical</h2>
 <p>${DISCLAIMER}</p>
 <h2>Questions</h2>
@@ -223,7 +226,7 @@ pages["about-maddie.html"] = page({
 <div class="prose">
 <p class="eyebrow">The Person Behind It</p>
 <h1>About Maddie</h1>
-<p>I wear a Dexcom and I'm on Discord most of the day, and one afternoon I had a silly idea: what if my blood sugar just showed up under my name? It turned out to be possible, so I built it. It's free, it's for fun, and I hope it makes you smile.</p>
+<p>I wear a Dexcom and I'm on Discord most of the day, and one afternoon I had a silly idea: what if my blood sugar just showed up under my name? It turned out to be possible, so I built it. Then I noticed the part I looked at most was the number sitting in my menu bar, so that's what ${NAME} is now, with Discord as a bonus. It's free, it's for fun, and I hope it makes you smile.</p>
 <p>I'm Maddie, I'm autistic, and I often make small tools that fix one specific irritation properly — the sort of thing that's too small for a company to bother with and too annoying to keep putting up with.</p>
 <p>I also develop apps for PC, Mac, mobiles, and tablets. I generally develop apps that:</p>
 <ol class="how"><li>Help me with a problem that I have.</li><li>Will help others.</li><li>Bring a little bit of good to the world.</li></ol>

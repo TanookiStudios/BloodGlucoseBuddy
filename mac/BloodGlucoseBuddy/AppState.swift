@@ -12,6 +12,8 @@ final class AppState: ObservableObject {
     private let discord = DiscordIPC(clientID: AppState.discordClientID)
     private let discordQueue = DispatchQueue(label: "com.tanookistudios.bloodglucosebuddy.discord")
 
+    /// Discord is an optional extra: off for new users, kept on for people who had 1.0 (which always showed it).
+    @Published var discordOn: Bool { didSet { defaults.set(discordOn, forKey: "discord"); refreshDiscord() } }
     @Published var mode: DisplayMode { didSet { defaults.set(mode.rawValue, forKey: "mode"); refreshDiscord() } }
     @Published var unit: GlucoseUnit { didSet { defaults.set(unit.rawValue, forKey: "unit"); refreshDiscord() } }
     @Published var verb: StatusVerb { didSet { defaults.set(verb.rawValue, forKey: "verb"); refreshDiscord() } }
@@ -38,6 +40,7 @@ final class AppState: ObservableObject {
         lowThreshold = defaults.object(forKey: "low") as? Int ?? 70
         highThreshold = defaults.object(forKey: "high") as? Int ?? 180
         let savedUser = defaults.string(forKey: "username") ?? ""
+        discordOn = defaults.object(forKey: "discord") as? Bool ?? !savedUser.isEmpty
         username = savedUser
         region = DexcomRegion(rawValue: defaults.string(forKey: "region") ?? "") ?? .us
         isSignedIn = !savedUser.isEmpty && Keychain.password(for: savedUser) != nil
@@ -73,6 +76,7 @@ final class AppState: ObservableObject {
     }
 
     var discordLine: String {
+        if !discordOn { return "Discord: off" }
         if discordConnected { return isSignedIn ? "Discord: showing your status" : "Discord: connected" }
         return discordProblem ?? "Discord: connecting…"
     }
@@ -182,12 +186,18 @@ final class AppState: ObservableObject {
 
     /// Sends the current status every tick, so a restarted Discord picks it up again within 30 seconds.
     private func pushToDiscord() async {
-        if Demo.isOn { discordConnected = true; return }  // never touch the real Discord status
+        if Demo.isOn { discordConnected = discordOn; return }  // never touch the real Discord status
+        let discord = self.discord
+        guard discordOn else {
+            discordQueue.async { discord.close() }  // closing the socket clears the status on Discord
+            discordConnected = false
+            discordProblem = nil
+            return
+        }
         let activity: [String: Any]? = isSignedIn
             ? Presence.activity(reading: reading, now: Date(), mode: mode, unit: unit, verb: verb,
                                 low: lowThreshold, high: highThreshold)
             : nil
-        let discord = self.discord
         let error: Error? = await withCheckedContinuation { done in
             discordQueue.async {
                 do {

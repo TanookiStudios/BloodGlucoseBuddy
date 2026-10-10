@@ -7,7 +7,9 @@ sealed class SettingsForm : Form
     private const int TextWidth = 440;
     private readonly TrayApp app;
     private readonly FlowLayoutPanel signedOut, signedIn;
-    private readonly Label signedInAs = Wrap(""), error = Wrap(""), note = Wrap(""), lowLabel = Caption(""), highLabel = Caption("");
+    private readonly Label signedInAs = Wrap(""), error = Wrap(""), note = Wrap(""), lowLabel = Caption(""), highLabel = Caption(""), discordLine = Wrap("");
+    private readonly CheckBox discordOn = new() { Text = "Show my reading on Discord", AutoSize = true };
+    private readonly FlowLayoutPanel discordOptions;
     private readonly TextBox username = new() { Width = 300 };
     private readonly TextBox password = new() { Width = 300, UseSystemPasswordChar = true };
     private readonly ComboBox region = Combo(Enum.GetValues<DexcomRegion>().Select(r => r.Label()));
@@ -48,16 +50,22 @@ sealed class SettingsForm : Form
             Wrap("Email or phone not working? Lots of Dexcom accounts need their account ID instead. Sign in to Dexcom here and we'll fill it in."),
             Row(find));
 
+        discordOptions = Column(
+            Muted(discordLine),
+            Row(Caption("Show"), mode),
+            Row(Caption("Status word"), verb),
+            Muted(Wrap("Not showing up? In Discord, click the gear at the bottom left to open User Settings, choose Activity Privacy, and turn on “Share your detected activities with others.”")),
+            Muted(Wrap("Everyone in every Discord server you're in can see it. To hide it from one server, right-click that server in Discord, choose Privacy Settings, and turn off Activity Status.")));
+
         var root = Column(
             Group("Dexcom account", Column(signedIn, signedOut)),
-            Group("On Discord", Column(
-                Row(Caption("Show"), mode),
+            Group("Your range", Column(
                 Row(Caption("Units"), unit),
-                Row(Caption("Status word"), verb))),
-            Group("Colored dot mode", Column(Row(lowLabel, low), Row(highLabel, high))),
-            Group("Not showing on Discord?", Wrap(
-                "In Discord, click the gear at the bottom left to open User Settings, choose Activity Privacy, and turn on “Share your detected activities with others.” Discord keeps your status hidden until that's on.")),
-            Muted(Wrap("Your status is visible to everyone in every Discord server you're in. To hide it from a server, right-click the server in Discord, choose Privacy Settings, and turn off Activity Status.")),
+                Row(lowLabel, low), Row(highLabel, high),
+                Muted(Wrap("The tray number turns green in range, yellow when high, and red when low.")))),
+            Group("Discord (optional)", Column(
+                Wrap("Puts your reading under your name on Discord, as a number or just a colored dot."),
+                discordOn, discordOptions)),
             Muted(Wrap("Not a medical device. Never make treatment decisions from Blood Glucose Buddy; use your Dexcom app or receiver. It reads Dexcom's unofficial Share feed, which can stop working without notice. Not affiliated with Dexcom or Discord.")));
         root.Padding = new Padding(12);
         this.root = root;
@@ -70,6 +78,7 @@ sealed class SettingsForm : Form
 
         signIn.Click += async (_, _) => await SignInAsync();
         find.Click += (_, _) => FindAccountId();
+        discordOn.CheckedChanged += (_, _) => Apply(() => app.Settings.Discord = discordOn.Checked);
         mode.SelectedIndexChanged += (_, _) => Apply(() => app.Settings.Mode = (DisplayMode)mode.SelectedIndex);
         unit.SelectedIndexChanged += (_, _) => Apply(() => app.Settings.Unit = (GlucoseUnit)unit.SelectedIndex);
         verb.SelectedIndexChanged += (_, _) => Apply(() => app.Settings.Verb = (StatusVerb)verb.SelectedIndex);
@@ -95,8 +104,11 @@ sealed class SettingsForm : Form
         loading = true;
         signedIn.Visible = app.IsSignedIn;
         signedOut.Visible = !app.IsSignedIn;
-        signedInAs.Text = $"Signed in as {app.Settings.Username} ({app.Settings.Region.Label()}).\n{app.ReadingLine}\n{app.DiscordLine}"
+        signedInAs.Text = $"Signed in as {app.Settings.Username} ({app.Settings.Region.Label()}).\n{app.ReadingLine}"
             + (app.DexcomProblem is { } p ? $"\n{p}" : "");
+        discordOn.Checked = app.DiscordOn;
+        discordOptions.Visible = app.DiscordOn;
+        discordLine.Text = app.DiscordLine;
         mode.SelectedIndex = (int)app.Settings.Mode;
         unit.SelectedIndex = (int)app.Settings.Unit;
         verb.SelectedIndex = (int)app.Settings.Verb;

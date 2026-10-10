@@ -5,7 +5,7 @@ using BloodGlucoseBuddy.Core;
 
 namespace BloodGlucoseBuddy;
 
-/// <summary>The whole app: a tray icon that shows your number, polls Dexcom, and keeps Discord up to date.</summary>
+/// <summary>The whole app: a tray icon that shows your number, polls Dexcom, and optionally keeps Discord up to date.</summary>
 sealed class TrayApp : ApplicationContext
 {
     /// <summary>The "Blood Glucose" application on Discord's developer site. Not a secret.</summary>
@@ -40,12 +40,14 @@ sealed class TrayApp : ApplicationContext
     private bool authBlocked;
     private bool ticking;
 
-    private ToolStripMenuItem readingItem = null!, ageItem = null!, dexcomItem = null!, discordItem = null!,
+    private ToolStripMenuItem readingItem = null!, ageItem = null!, dexcomItem = null!, discordItem = null!, discordToggle = null!,
         modeMenu = null!, unitMenu = null!, verbMenu = null!, startupItem = null!, settingsItem = null!;
+    private ToolStripSeparator discordSeparator = null!;
 
     public TrayApp()
     {
         Settings = Demo ? new AppSettings() : AppSettings.Load(SettingsPath);
+        Settings.Discord ??= Settings.Username.Length > 0;  // off for new users, kept on for people upgrading from 1.0
         IsSignedIn = Settings.Username.Length > 0 && Password() is not null;
         using (var s = typeof(TrayApp).Assembly.GetManifestResourceStream("app.ico")!) AppIcon = new Icon(s);
         tray = new NotifyIcon { Icon = AppIcon, Text = "Blood Glucose Buddy", Visible = true, ContextMenuStrip = BuildMenu() };
@@ -67,7 +69,9 @@ sealed class TrayApp : ApplicationContext
         ageItem = new ToolStripMenuItem { Enabled = false };
         dexcomItem = new ToolStripMenuItem { Enabled = false };
         discordItem = new ToolStripMenuItem { Enabled = false };
-        modeMenu = Choices("Show on Discord", Enum.GetValues<DisplayMode>(), m => m.Label(), m => Settings.Mode = m, () => Settings.Mode);
+        discordToggle = new ToolStripMenuItem("Show on Discord", null, (_, _) => { Settings.Discord = !DiscordOn; SettingsChanged(); });
+        discordSeparator = new ToolStripSeparator();
+        modeMenu = Choices("Show", Enum.GetValues<DisplayMode>(), m => m.Label(), m => Settings.Mode = m, () => Settings.Mode);
         unitMenu = Choices("Units", Enum.GetValues<GlucoseUnit>(), u => u.Label(), u => Settings.Unit = u, () => Settings.Unit);
         verbMenu = Choices("Status word", Enum.GetValues<StatusVerb>(), v => $"{v.Label()} Blood Glucose", v => Settings.Verb = v, () => Settings.Verb);
         startupItem = new ToolStripMenuItem("Start with Windows", null, (_, _) =>
@@ -77,8 +81,10 @@ sealed class TrayApp : ApplicationContext
             catch (Exception e) { DexcomProblem = $"Couldn't change Start with Windows: {e.Message}"; }
         });
         settingsItem = new ToolStripMenuItem("Settings…", null, (_, _) => ShowSettings());
-        menu.Items.AddRange([readingItem, ageItem, dexcomItem, discordItem, new ToolStripSeparator(),
-            modeMenu, unitMenu, verbMenu, startupItem, new ToolStripSeparator(),
+        var discordMenu = new ToolStripMenuItem("Discord");
+        discordMenu.DropDownItems.AddRange([discordToggle, discordItem, discordSeparator, modeMenu, verbMenu]);
+        menu.Items.AddRange([readingItem, ageItem, dexcomItem, new ToolStripSeparator(),
+            unitMenu, startupItem, discordMenu, new ToolStripSeparator(),
             settingsItem, new ToolStripMenuItem("Quit Blood Glucose Buddy", null, (_, _) => ExitThread())]);
         menu.Opening += (_, _) => RefreshMenu();
         return menu;
@@ -104,6 +110,8 @@ sealed class TrayApp : ApplicationContext
         dexcomItem.Text = DexcomProblem ?? "";
         dexcomItem.Visible = DexcomProblem is not null;
         discordItem.Text = DiscordLine;
+        discordToggle.Checked = DiscordOn;
+        discordSeparator.Visible = modeMenu.Visible = verbMenu.Visible = DiscordOn;
         startupItem.Checked = Demo || Startup.Enabled;
         settingsItem.Text = IsSignedIn ? "Settings…" : "Sign In…";
     }
@@ -128,7 +136,9 @@ sealed class TrayApp : ApplicationContext
         }
     }
 
-    public string DiscordLine => discordConnected
+    public bool DiscordOn => Settings.Discord == true;
+
+    public string DiscordLine => !DiscordOn ? "Discord: off" : discordConnected
         ? (IsSignedIn ? "Discord: showing your status" : "Discord: connected")
         : discordProblem ?? "Discord: connecting…";
 
@@ -254,7 +264,16 @@ sealed class TrayApp : ApplicationContext
     /// <summary>Sends the current status every tick, so a restarted Discord picks it up again within 30 seconds.</summary>
     private async Task PushToDiscordAsync()
     {
-        if (Demo) { discordConnected = true; return; }  // never touch the real Discord status
+        if (Demo) { discordConnected = DiscordOn; return; }  // never touch the real Discord status
+        if (!DiscordOn)
+        {
+            await discordLock.WaitAsync();
+            try { discord.Close(); }  // closing the pipe clears the status on Discord
+            finally { discordLock.Release(); }
+            discordConnected = false;
+            discordProblem = null;
+            return;
+        }
         var activity = IsSignedIn
             ? Presence.Activity(Reading, DateTimeOffset.UtcNow, Settings.Mode, Settings.Unit, Settings.Verb, Settings.Low, Settings.High)
             : null;
@@ -288,6 +307,7 @@ sealed class TrayApp : ApplicationContext
     public void DemoSignIn(string username)
     {
         Settings.Username = username;
+        Settings.Discord = true;
         demoPassword = "demo";
         IsSignedIn = true;
         Reading = DemoReading;

@@ -13,6 +13,8 @@ public sealed class AppSettings
     public DexcomRegion Region { get; set; } = DexcomRegion.US;
     public string Username { get; set; } = "";
     public bool StartupSetUp { get; set; }
+    /// <summary>Discord is an optional extra. Null in files saved by 1.0 (which always showed it); see TrayApp.</summary>
+    public bool? Discord { get; set; }
 
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
 

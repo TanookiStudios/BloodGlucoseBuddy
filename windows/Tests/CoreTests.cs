@@ -104,4 +104,16 @@ public class CoreTests
         Assert.Equal((DisplayMode.Dot, GlucoseUnit.Mmol, 80, "x"), (s.Mode, s.Unit, s.Low, s.Username));
         Directory.Delete(Path.GetDirectoryName(path)!, true);
     }
+
+    [Fact]
+    public void DiscordChoiceIsUnsetInOldSettingsAndSavedOnceMade()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bgb-{Guid.NewGuid()}", "settings.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, """{ "Username": "x", "Mode": "Dot" }""");  // a 1.0 file: no Discord field
+        Assert.Null(AppSettings.Load(path).Discord);
+        new AppSettings { Discord = false }.Save(path);
+        Assert.False(AppSettings.Load(path).Discord);
+        Directory.Delete(Path.GetDirectoryName(path)!, true);
+    }
 }

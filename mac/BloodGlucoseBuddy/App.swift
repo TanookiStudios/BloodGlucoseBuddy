@@ -35,20 +35,26 @@ struct MenuContent: View {
             Text("Not signed in to Dexcom")
         }
         if let problem = state.dexcomProblem { Text(problem) }
-        Text(state.discordLine)
 
         Divider()
 
-        Picker("Show on Discord", selection: $state.mode) {
-            ForEach(DisplayMode.allCases) { Text($0.label).tag($0) }
-        }
         Picker("Units", selection: $state.unit) {
             ForEach(GlucoseUnit.allCases) { Text($0.label).tag($0) }
         }
-        Picker("Status Word", selection: $state.verb) {
-            ForEach(StatusVerb.allCases) { Text("\($0.label) Blood Glucose").tag($0) }
-        }
         Toggle("Open at Login", isOn: Binding(get: { state.openAtLogin }, set: { state.setOpenAtLogin($0) }))
+        Menu("Discord") {
+            Toggle("Show on Discord", isOn: $state.discordOn)
+            Text(state.discordLine)
+            if state.discordOn {
+                Divider()
+                Picker("Show", selection: $state.mode) {
+                    ForEach(DisplayMode.allCases) { Text($0.label).tag($0) }
+                }
+                Picker("Status Word", selection: $state.verb) {
+                    ForEach(StatusVerb.allCases) { Text("\($0.label) Blood Glucose").tag($0) }
+                }
+            }
+        }
 
         Divider()
 
@@ -125,20 +131,40 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Colored dot mode") {
-                Stepper("Low below \(Presence.format(state.lowThreshold, state.unit))",
-                        value: $state.lowThreshold, in: 40...150, step: 5)
-                Stepper("High above \(Presence.format(state.highThreshold, state.unit))",
-                        value: $state.highThreshold, in: 120...400, step: 5)
+            Section {
+                Toggle("Show my reading on Discord", isOn: $state.discordOn)
+                    .accessibilityIdentifier("discordOn")
+                if state.discordOn {
+                    Text(state.discordLine).foregroundStyle(.secondary)
+                    Picker("Show", selection: $state.mode) {
+                        ForEach(DisplayMode.allCases) { Text($0.label).tag($0) }
+                    }
+                    Picker("Status word", selection: $state.verb) {
+                        ForEach(StatusVerb.allCases) { Text("\($0.label) Blood Glucose").tag($0) }
+                    }
+                    if state.mode == .dot {
+                        Stepper("Low below \(Presence.format(state.lowThreshold, state.unit))",
+                                value: $state.lowThreshold, in: 40...150, step: 5)
+                        Stepper("High above \(Presence.format(state.highThreshold, state.unit))",
+                                value: $state.highThreshold, in: 120...400, step: 5)
+                    }
+                    Group {
+                        Text("Not showing up? In Discord, click the gear at the bottom left to open User Settings, choose Activity Privacy, and turn on \u{201C}Share your detected activities with others.\u{201D}")
+                        Text("Everyone in every Discord server you're in can see it. To hide it from one server, right-click that server in Discord, choose Privacy Settings, and turn off Activity Status.")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Discord")
+            } footer: {
+                if !state.discordOn {
+                    Text("Optional. Puts your reading under your name on Discord, as a number or just a colored dot.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
-
-            Section("Not showing on Discord?") {
-                Text("In Discord, click the gear at the bottom left to open User Settings, choose Activity Privacy, and turn on \u{201C}Share your detected activities with others.\u{201D} Discord keeps your status hidden until that's on.")
-            }
-            .font(.caption)
 
             Section {
-                Text("Your status is visible to everyone in every Discord server you're in. To hide it from a server, right-click the server in Discord, choose Privacy Settings, and turn off Activity Status.")
                 Text("Not a medical device. Never make treatment decisions from Blood Glucose Buddy; use your Dexcom app or receiver. It reads Dexcom's unofficial Share feed, which can stop working without notice. Not affiliated with Dexcom or Discord.")
             }
             .font(.caption)
