@@ -13,7 +13,12 @@ struct AboutView: View {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
                 Text("Hi, I'm Maddie.").font(.title2.bold())
             }
-            Text("This app is tiny on purpose. It does one thing: it puts my blood sugar next to the clock. It's so quiet that on the first day, I lost it and had to ask where it went. (It was in the menu bar. It's always in the menu bar.)")
+            #if APP_STORE
+            // Apple rejects apps that mention other platforms, so the App Store copy leaves Windows out.
+            Text("This app is tiny on purpose. It does one thing: it puts my blood sugar next to the clock on my computer, so I can keep working without picking up my phone.")
+            #else
+            Text("This app is tiny on purpose. It does one thing: it puts my blood sugar next to the clock on my computer (Mac or Windows), so I can keep working without picking up my phone.")
+            #endif
             Text("I thought about charging a dollar and couldn't do it. Something this simple should just be free, so it is, and it'll stay that way. It's also my first app on the App Store, which feels like a big deal to me.")
             Text("Making apps is how I pay my bills, though. If it's earned its spot next to your clock, a tip helps me keep going. No pressure at all.")
             tipButtons
