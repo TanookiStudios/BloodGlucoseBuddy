@@ -121,8 +121,10 @@ final class ScreenshotTests: XCTestCase {
     func test4AboutMaddie() {
         let app = launch(signedIn: true)
         defer { app.terminate() }
-        app.statusItems.firstMatch.click()
-        let about = openMenu(app, showing: "Quit Blood Glucose Buddy").menuItems["openAbout"]
+        let item = app.statusItems.firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 15), "menu bar item never appeared")
+        item.click()
+        let about = openMenu(app, showing: "Quit Blood Glucose Buddy").menuItems["About Maddie…"]  // menu items ignore accessibility identifiers
         XCTAssertTrue(about.waitForExistence(timeout: 5), "About Maddie missing from the menu")
         about.click()
         capture(app.windows["About Maddie"], "12-about-maddie")
