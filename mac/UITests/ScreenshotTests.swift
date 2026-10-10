@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 /// Drives the real app in demo mode (BGB_DEMO=1: fabricated readings, throwaway settings, no Keychain,
@@ -26,6 +27,46 @@ final class ScreenshotTests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// The menu with its open submenu, cropped from the whole screen: neither element alone shows both.
+    private func captureWithSubmenu(_ menu: XCUIElement, _ entry: XCUIElement, _ name: String) {
+        let submenu = entry.menus.firstMatch
+        let deadline = Date().addingTimeInterval(10)
+        while submenu.frame.isEmpty && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.25)) }
+        XCTAssertFalse(submenu.frame.isEmpty, "\(name): submenu never opened")
+        let area = menu.frame.union(submenu.frame)
+        let screen = XCUIScreen.main.screenshot().image
+        guard let full = screen.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return XCTFail("\(name): no screen image") }
+        let scale = CGFloat(full.width) / screen.size.width
+        let crop = CGRect(x: area.minX * scale, y: area.minY * scale, width: area.width * scale, height: area.height * scale)
+        guard let cut = full.cropping(to: crop),
+              let ctx = CGContext(data: nil, width: cut.width, height: cut.height, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return XCTFail("\(name): crop outside the screen") }
+        // Keep only the two menus' own pixels, so nothing of the desktop behind them ends up in the picture.
+        for f in [menu.frame, submenu.frame] {
+            let r = CGRect(x: (f.minX - area.minX) * scale, y: (area.maxY - f.maxY) * scale, width: f.width * scale, height: f.height * scale)
+            ctx.addPath(CGPath(roundedRect: r.insetBy(dx: scale, dy: scale), cornerWidth: 9 * scale, cornerHeight: 9 * scale, transform: nil))
+        }
+        ctx.clip()
+        ctx.draw(cut, in: CGRect(x: 0, y: 0, width: cut.width, height: cut.height))
+        guard let masked = ctx.makeImage() else { return XCTFail("\(name): couldn't mask") }
+        let shot = XCTAttachment(image: NSImage(cgImage: masked, size: area.size))
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    /// The open menu that shows `item`. app.menus also holds closed menus with empty frames, which can't be captured.
+    private func openMenu(_ app: XCUIApplication, showing item: String) -> XCUIElement {
+        let deadline = Date().addingTimeInterval(10)
+        repeat {
+            if let m = app.menus.allElementsBoundByIndex.first(where: { !$0.frame.isEmpty && $0.menuItems[item].exists }) { return m }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTFail("no open menu showing \(item)")
+        return app.menus.firstMatch
     }
 
     private func settingsWindow(_ app: XCUIApplication) -> XCUIElement {
@@ -66,14 +107,13 @@ final class ScreenshotTests: XCTestCase {
         let item = app.statusItems.firstMatch
         capture(item, "04-menu-bar")
         item.click()
-        let menu = app.menus.firstMatch
+        let menu = openMenu(app, showing: "Quit Blood Glucose Buddy")
         capture(menu, "05-menu")
         for (title, name) in [("Units", "06-menu-units"), ("Discord", "07-menu-discord")] {
             let entry = menu.menuItems[title]
             XCTAssertTrue(entry.waitForExistence(timeout: 5), "\(title) missing from the menu")
             entry.hover()
-            let submenu = entry.menus.firstMatch
-            capture(submenu.exists ? submenu : app.menus.element(boundBy: 1), name)
+            captureWithSubmenu(menu, entry, name)
         }
         app.typeKey(.escape, modifierFlags: [])
     }

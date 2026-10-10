@@ -23,7 +23,7 @@ Website: **[bloodglucosebuddy.tanookistudios.com](https://bloodglucosebuddy.tano
 | | |
 |---|---|
 | **Mac** (macOS 15+) | [Latest release](https://github.com/TanookiStudios/BloodGlucoseBuddy/releases/latest) — signed and notarized by Apple. |
-| **Windows** (Windows 11) | **In testing.** A [test build](https://github.com/TanookiStudios/BloodGlucoseBuddy/releases/tag/v1.1.0-beta.2) is up; the full release follows once it's been tried on real PCs. Not yet code-signed, so Windows asks you to click **More info → Run anyway** the first time. |
+| **Windows** (Windows 11) | **In testing.** A [test build](https://github.com/TanookiStudios/BloodGlucoseBuddy/releases/tag/v1.1.0-beta.3) is up; the full release follows once it's been tried on real PCs. Not yet code-signed, so Windows asks you to click **More info → Run anyway** the first time. |
 
 Then follow the **[setup guide](docs/SETUP.md)**: turn on Dexcom Share and sign in. Discord is one more optional step.
 
